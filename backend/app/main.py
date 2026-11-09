@@ -137,8 +137,8 @@ def sec_filings(ticker: str) -> dict:
 
 
 class FilingSelection(BaseModel):
-    ticker: str = Field(min_length=1, max_length=12, pattern=r'^[A-Za-z0-9.\\-]+$')
-    accession: str = Field(pattern=r'^\\d{10}-\\d{2}-\\d{6}$')
+    ticker: str = Field(min_length=1, max_length=12, pattern=r'^[A-Za-z0-9.\-]+$')
+    accession: str = Field(pattern=r'^\d{10}-\d{2}-\d{6}$')
 
 
 @app.post('/api/v1/filings/import')

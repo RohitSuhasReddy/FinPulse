@@ -1,0 +1,64 @@
+# Python bytecode and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Frontend dependencies and caches
+node_modules/
+.vite/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Environment variables and secrets (keep safe templates)
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+
+# Local database and runtime files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+logs/
+uploads/
+tmp/
+temp/
+
+# Downloaded machine learning weights / caches
+.cache/
+models/cache/
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

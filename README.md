@@ -18,6 +18,24 @@ FinPulse is a local-first research dashboard built with **React, TypeScript, Rec
 - Historical daily closing price and volume around an event, with conservative announcement-session alignment.
 - Local SQLite persistence of structured analyses, an API and responsive interactive dashboard.
 
+## Quick start on Windows
+
+After the initial backend and frontend dependencies have been installed, run this from the **FinPulse repository root** in PowerShell:
+
+```powershell
+.\run-dev.ps1
+```
+
+Or use the equivalent shortcut:
+
+```powershell
+.\start.ps1
+```
+
+Both commands open **two PowerShell windows**: FastAPI on `http://127.0.0.1:8000` and React/Vite on `http://localhost:5173`. Leave those windows open while using FinPulse. Press `Ctrl+C` in each window to stop the servers.
+
+The launcher uses `backend/.venv/Scripts/python.exe` and the installed `frontend/node_modules`. If either is missing, it shows the required setup commands rather than silently installing packages. If PowerShell prevents running a script, run `Set-ExecutionPolicy -Scope Process Bypass` in that terminal and retry.
+
 ## Run locally
 
 Requires **Python 3.11+**, **Node.js 20+** and internet access for initial dependency installation. Use two terminals at the repository root.

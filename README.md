@@ -2,7 +2,7 @@
 
 **Evidence-linked earnings & news intelligence** — compare what a company said with how the media covered it.
 
-FinPulse is a local-first research dashboard built with **React, TypeScript, Recharts, FastAPI, Python and SQLite**. It analyzes pasted earnings transcripts/press releases alongside up to three independently attributed articles, then connects financial metrics, extractive highlights and common themes to source passages. Historical market context uses yfinance when available. No paid LLM API is required.
+FinPulse is a local-first research dashboard built with **React, TypeScript, Recharts, FastAPI, Python and SQLite**. It analyzes pasted earnings transcripts/press releases alongside up to three independently attributed articles, then connects financial metrics, extractive highlights and common themes to source passages. Historical market context uses yfinance when available.
 
 > **Status: working MVP / initial implementation.** The demo is fictional. Financial metric extraction and media comparison are rule-based baselines, not audited facts. This is **not investment advice**, a stock predictor, or a fact-checker.
 
@@ -52,7 +52,7 @@ npm run dev
 
 Open **http://localhost:5173**. The Vite dev server proxies `/api` requests to `http://127.0.0.1:8000`. API reference: **http://localhost:8000/docs**. Run `npm run build` to build the frontend.
 
-Start with **Explore demo** to view a clearly labeled *fictional ExampleCorp* dashboard, including illustrative (not live) stock prices. To analyze your own documents, expand **Start an analysis**, provide a company and earnings text, add optional news URLs/pasted articles, and click **Analyze intelligence**. Providing a date allows the backend to fetch historical market context separately.
+The dashboard opens directly on a clearly labeled *fictional ExampleCorp* report with illustrative (not live) stock prices. Use **Price / Volume** in the market lens to change the interactive chart. To analyze your own documents, click **New analysis** or **Analyze a company**, supply company details and earnings text, add optional news URLs or pasted articles, then click **Generate analysis**. The form opens as a slide-over, keeping the report uncluttered. Supplying an announcement date allows historical market data to load separately. Click **Demo** at any time to reset to the fictional sample.
 
 ## Test
 
@@ -81,11 +81,11 @@ Schema and request examples: [`frontend/src/data/sample-request.json`](frontend/
 
 | Role | Color | Hex |
 |---|---|---|
-| Main background / canvas | Midnight Black | `#02070A` |
-| Graphs / interactive data | Electric Blue | `#0297DE` |
-| Event markers / selective emphasis | Cantaloupe Orange | `#FC734D` |
+| Foundation / negative space | Onyx Black | `#01010D` |
+| Data and visual depth | Electric Indigo | `#6331FB` |
+| Signal, focus, earnings marker, actions | Tropical Mint | `#88F9C0` |
 
-Styles are centrally tokenized in `frontend/src/styles.css`. **Typography is intentionally provisional**; it can be changed later without redesigning the application. Colors distinguish roles, but status and meaning also use text labels.
+This is the **second-generation visual direction**, inspired by the owner's color reference. It uses a full-width editorial layout **without a sidebar**, a custom pulse symbol and favicon, expressive **DM Sans + Instrument Serif** typography, animated yet reduced-motion-safe visual elements, and a large interactive price / volume hero chart. Source citations remain accessible in expandable evidence panels. **No fake live quotes:** the default demo is fictional and labeled as such; live data is historical and may be missing. Color tokens are centralized in `frontend/src/styles.css` and the browser theme color is configured in `frontend/index.html`. See [`docs/design-system.md`](docs/design-system.md).
 
 ## Project layout
 
@@ -100,7 +100,8 @@ backend/
   tests/                  # pytest suite
 frontend/
   src/App.tsx              # responsive dashboard, upload and input flow
-  src/styles.css          # centralized design tokens
+  src/styles.css          # palette, transitions, layout and motion
+  public/finpulse-mark.svg # custom favicon
   src/data/               # explicitly fictional demo only
   src/types.ts            # TypeScript API contracts
 docs/architecture.md      # design, limitations and security notes

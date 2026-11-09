@@ -1,0 +1,19 @@
+{
+  "company_name": "ExampleCorp (fictional)",
+  "ticker": "EXMP",
+  "fiscal_period": "FY2026 Q2",
+  "announcement_date": "2026-10-16",
+  "earnings_text": "ExampleCorp reported revenue of $24.5 billion for FY2026 Q2, representing 12% year-over-year growth.\nAdjusted diluted EPS was $2.15 compared with $1.92 in the prior-year period.\nOperating margin was 24.2%, up from 22.8% a year earlier.\nCloud services growth and enterprise demand supported performance during the quarter.\nManagement expects demand to remain steady and reiterated its full-year guidance.\nCapital expenditure on AI infrastructure is expected to remain elevated as capacity expands.\nSupply chain risks and higher operating costs may pressure future margins.\nFree cash flow was $3.4 billion for the quarter.",
+  "news_sources": [
+    {
+      "title": "Growth remains strong, but supply concerns emerge",
+      "outlet": "The Market Ledger (fictional)",
+      "text": "ExampleCorp reported higher revenue as cloud demand accelerated during the period. Investors focused on the company's strong profit performance and improving operating margin. Analysts also highlighted supply chain risks and questioned whether rising infrastructure costs could weigh on future returns."
+    },
+    {
+      "title": "AI investment takes center stage in quarterly update",
+      "outlet": "Daily Finance Wire (fictional)",
+      "text": "Artificial intelligence and cloud capacity dominated coverage of ExampleCorp's latest earnings. Management is increasing capital expenditure while insisting that demand remains healthy. The outlook and full-year guidance drew interest, even as uncertain infrastructure costs led some observers to flag risks."
+    }
+  ]
+}

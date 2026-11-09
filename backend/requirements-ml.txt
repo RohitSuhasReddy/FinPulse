@@ -1,0 +1,4 @@
+-r requirements.txt
+# Optional offline sentiment model. Download/cache model weights separately.
+transformers>=4.45,<6
+torch>=2.3,<3

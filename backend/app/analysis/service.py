@@ -1,6 +1,7 @@
 """One analysis per company and period, preserving independent source identity."""
 from datetime import datetime, timezone
 from hashlib import sha256
+from urllib.parse import urlsplit
 from app.analysis.text import clean_text, detected_themes, summarize
 from app.analysis.metrics import extract_metrics
 from app.analysis.comparison import compare
@@ -20,6 +21,19 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         text = clean_text(item.text or '')
         published, url = item.published_at, str(item.url) if item.url else None
         origin = 'pasted_text' if text else 'url'
+        # RSS discovery is metadata, not an article. Do not turn headlines
+        # into source-backed news claims or sentiment if the body is inaccessible.
+        def metadata_only(reason: str) -> None:
+            warnings.append(f'News source {idx}: {reason}')
+            source_responses.append(SourceAnalysis(
+                source_id=sid, title=title or url or f'News {idx}',
+                outlet=outlet or 'Discovered news', url=url, published_at=published,
+                summary=[], themes=[], sentiment_label=None, sentiment_method=None,
+                input_origin='headline_only', extraction_status='metadata_only',
+                warning=reason))
+        if item.headline_only and url and urlsplit(url).hostname == 'news.google.com':
+            metadata_only('Headline discovered via news RSS; the linked article body was not available for analysis.')
+            continue
         if not text and url:
             try:
                 article = fetch_article(url)
@@ -27,6 +41,9 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
                 title, outlet = title or article.title, outlet or article.outlet
                 published = published or article.published_at
             except ArticleError as exc:
+                if item.headline_only:
+                    metadata_only(f'Article body unavailable ({exc}); headline metadata retained only.')
+                    continue
                 warning = f'News source {idx}: {exc}'
                 warnings.append(warning)
                 source_responses.append(SourceAnalysis(source_id=sid, title=title or url,

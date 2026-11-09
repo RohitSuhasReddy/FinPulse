@@ -8,8 +8,8 @@ export interface FinancialMetric {
 export interface SourceAnalysis {
   source_id: string; title: string; outlet: string; url: string | null; published_at: string | null;
   summary: Highlight[]; themes: string[]; sentiment_label: 'positive' | 'negative' | 'neutral' | null;
-  sentiment_method: string | null; input_origin: 'url' | 'pasted_text';
-  extraction_status: 'ok' | 'failed'; warning: string | null;
+  sentiment_method: string | null; input_origin: 'url' | 'pasted_text' | 'headline_only';
+  extraction_status: 'ok' | 'failed' | 'metadata_only'; warning: string | null;
 }
 export interface ThemeComparison {
   theme: string; relationship: 'shared' | 'earnings_only' | 'news_only';
@@ -24,7 +24,7 @@ export interface Analysis {
   comparison: ThemeComparison[]; warnings: string[]; sentiment_model: string;
   data_origin: 'user_supplied_text';
 }
-export interface NewsInput { title?: string; outlet?: string; text?: string; url?: string }
+export interface NewsInput { title?: string; outlet?: string; text?: string; url?: string; headline_only?: boolean }
 export interface AnalysisInput {
   company_name: string; ticker: string; fiscal_period: string; announcement_date?: string | null;
   market_timing?: 'before_open' | 'after_close' | 'unknown';

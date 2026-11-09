@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import {
   ArrowDownRight, ArrowUpRight, ChevronDown, ExternalLink,
-  FileUp, Info, LoaderCircle, Plus, RotateCcw, X,
+  FileUp, Info, LibraryBig, LoaderCircle, Plus, RotateCcw, X,
 } from 'lucide-react'
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, ReferenceLine,
@@ -11,6 +11,9 @@ import {
 import type { Analysis, AnalysisInput, Evidence, NewsInput, StockContext } from './types'
 import demoResponse from './data/demo-response.json'
 import { PREVIEW_STOCK } from './data/preview-stock'
+import ResearchTools from './ResearchTools'
+import ReportLibrary from './ReportLibrary'
+import './research.css'
 
 type Mode = 'demo' | 'live'
 type ChartTab = 'price' | 'volume'
@@ -162,7 +165,7 @@ function Perspective({ data }: { data: Analysis }) {
         <div className="media-card-head"><span className="media-index">{String(i + 1).padStart(2, '0')}</span><span className="media-outlet">{source.outlet}</span>{safeLink(source.url) && <a href={safeLink(source.url)!} target="_blank" rel="noopener noreferrer" aria-label={`Open ${source.outlet} article`}><ExternalLink size={16} /></a>}</div>
         <h3>{source.title}</h3>
         <div className="media-bottom"><span className={`sentiment sentiment-${source.sentiment_label || 'unknown'}`}>{source.sentiment_label ? `${source.sentiment_label} tone` : 'Tone unavailable'}</span><span>ESTIMATED LANGUAGE TONE</span></div>
-        {source.extraction_status === 'failed' ? <p className="media-warning">{source.warning ?? 'Article unavailable.'}</p> : source.summary[0] && <div className="media-excerpt"><p>{source.summary[0].text}</p><EvidenceLink evidence={source.summary[0].evidence}>Source passage</EvidenceLink></div>}
+        {source.extraction_status !== 'ok' ? <p className="media-warning">{source.warning ?? 'Article unavailable.'}</p> : source.summary[0] && <div className="media-excerpt"><p>{source.summary[0].text}</p><EvidenceLink evidence={source.summary[0].evidence}>Source passage</EvidenceLink></div>}
       </article>) : <div className="detail-empty">No articles added yet. Create an analysis with news sources to compare perspectives.</div>}
     </div>
     <div className="perspective-compare" id="comparison"><div className="comparison-heading"><span>THE OVERLAP</span><strong>{shared.length} shared {shared.length === 1 ? 'theme' : 'themes'}</strong></div>
@@ -216,6 +219,7 @@ function AnalysisDrawer({ initial, onClose, onSubmit, loading, uploading, error,
         <div className="form-group"><label htmlFor="company">Company name</label><input id="company" required minLength={2} maxLength={120} placeholder="e.g. Microsoft" value={form.company_name} onChange={e => update('company_name', e.target.value)}/></div>
         <div className="form-pair"><div className="form-group"><label htmlFor="ticker">Ticker</label><input id="ticker" required maxLength={12} placeholder="MSFT" value={form.ticker} onChange={e => update('ticker', e.target.value.toUpperCase())}/></div><div className="form-group"><label htmlFor="quarter">Fiscal period</label><input id="quarter" required minLength={3} maxLength={40} placeholder="FY2026 Q2" value={form.fiscal_period} onChange={e => update('fiscal_period', e.target.value)}/></div></div>
         <div className="form-pair"><div className="form-group"><label htmlFor="event-date">Announcement date <small>optional</small></label><input id="event-date" type="date" value={form.announcement_date ?? ''} onChange={e => update('announcement_date', e.target.value || null)}/></div><div className="form-group"><label htmlFor="timing">Announcement timing</label><select id="timing" value={form.market_timing ?? 'unknown'} onChange={e => update('market_timing', e.target.value as AnalysisInput['market_timing'])}><option value="unknown">Unknown</option><option value="before_open">Before market open</option><option value="after_close">After market close</option></select></div></div>
+        <ResearchTools ticker={form.ticker} company={form.company_name} date={form.announcement_date} onFiling={filing => setForm(prev => ({...prev, ticker: filing.ticker, company_name: filing.company_name, fiscal_period: filing.fiscal_period, earnings_text: filing.text }))} onNews={sources => setForm(prev => ({...prev, news_sources: sources }))}/>
         <div className="form-group"><div className="field-title"><label htmlFor="earnings-text">Earnings text</label><button type="button" className="mini-action" disabled={uploading} onClick={() => pdfRef.current?.click()}><FileUp size={15}/>{uploading ? 'Importing…' : 'Import PDF'}</button><input hidden ref={pdfRef} type="file" accept=".pdf,application/pdf" onChange={e => void loadPdf(e.target.files?.[0])}/></div><textarea id="earnings-text" required minLength={80} rows={6} placeholder="Paste an earnings press release or transcript (at least 80 characters)…" value={form.earnings_text} onChange={e => update('earnings_text', e.target.value)}/></div>
         <div className="field-title news-field-title"><label>News coverage <small>optional</small></label><button type="button" className="mini-action" disabled={form.news_sources.length >= 3} onClick={() => update('news_sources', [...form.news_sources, { url: '', title: '', outlet: '', text: '' }])}><Plus size={15}/>Add article</button></div>
         {form.news_sources.map((source, i) => <div className="news-input-group" key={i}><div className="news-input-head"><span>ARTICLE {String(i + 1).padStart(2, '0')}</span><button type="button" aria-label={`Remove article ${i + 1}`} onClick={() => update('news_sources', form.news_sources.filter((_, j) => j !== i))}><X size={16}/></button></div><div className="form-group"><label htmlFor={`article-url-${i}`}>Article URL</label><input id={`article-url-${i}`} type="url" value={source.url ?? ''} placeholder="https://…" onChange={e => updateNews(i, 'url', e.target.value)}/></div><div className="form-pair"><div className="form-group"><label htmlFor={`article-outlet-${i}`}>Outlet <small>optional</small></label><input id={`article-outlet-${i}`} value={source.outlet ?? ''} maxLength={100} onChange={e => updateNews(i, 'outlet', e.target.value)}/></div><div className="form-group"><label htmlFor={`article-title-${i}`}>Title <small>optional</small></label><input id={`article-title-${i}`} value={source.title ?? ''} maxLength={240} onChange={e => updateNews(i, 'title', e.target.value)}/></div></div><div className="form-group"><label htmlFor={`article-text-${i}`}>Pasted article text <small>URL fallback</small></label><textarea id={`article-text-${i}`} rows={3} value={source.text ?? ''} placeholder="Paste article text if the link cannot be read…" onChange={e => updateNews(i, 'text', e.target.value)}/></div></div>)}
@@ -234,6 +238,7 @@ export default function App() {
   const [mode, setMode] = useState<Mode>('demo')
   const [stock, setStock] = useState<StockContext | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -266,7 +271,7 @@ export default function App() {
     try {
       const sources = next.news_sources.filter(s => s.url?.trim() || s.text?.trim()).map(s => ({
         ...(s.url?.trim() ? { url: s.url.trim() } : {}), ...(s.text?.trim() ? { text: s.text.trim() } : {}),
-        ...(s.title?.trim() ? { title: s.title.trim() } : {}), ...(s.outlet?.trim() ? { outlet: s.outlet.trim() } : {}),
+        ...(s.title?.trim() ? { title: s.title.trim() } : {}), ...(s.outlet?.trim() ? { outlet: s.outlet.trim() } : {}), ...(s.headline_only ? { headline_only: true } : {}),
       }))
       const response = await fetch('/api/v1/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...next, news_sources: sources }) })
       const json = await response.json()
@@ -282,9 +287,20 @@ export default function App() {
     finally { setLoading(false) }
   }
 
+  function openSaved(report: Analysis) {
+    setData(report); setMode('live'); setInput(blank); setStock(null); setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (report.announcement_date) {
+      const params = new URLSearchParams({ announcement_date: report.announcement_date, market_timing: report.market_timing })
+      fetch(`/api/v1/stocks/${encodeURIComponent(report.ticker)}?${params}`)
+        .then(r => r.ok ? r.json() as Promise<StockContext> : null)
+        .then(setStock).catch(() => setStock(null))
+    }
+  }
+
   return <div className="app-page" id="top">
     <div className="global-aura" aria-hidden="true" />
-    <header className="site-header"><div className="header-inner"><Brand/><nav className="site-nav" aria-label="Main sections"><a href="#market">Market lens</a><a href="#earnings">Earnings</a><a href="#perspectives">Perspectives</a></nav><div className="header-actions"><button className="demo-reset" onClick={resetDemo}><RotateCcw size={15}/> <span>Demo</span></button><button className="header-cta" onClick={() => { setError(''); setDrawerOpen(true) }}>New analysis <ArrowUpRight size={17}/></button></div></div></header>
+    <header className="site-header"><div className="header-inner"><Brand/><nav className="site-nav" aria-label="Main sections"><a href="#market">Market lens</a><a href="#earnings">Earnings</a><a href="#perspectives">Perspectives</a></nav><div className="header-actions"><button className="demo-reset" onClick={() => setLibraryOpen(true)}><LibraryBig size={15}/> <span>Library</span></button><button className="demo-reset" onClick={resetDemo}><RotateCcw size={15}/> <span>Demo</span></button><button className="header-cta" onClick={() => { setError(''); setDrawerOpen(true) }}>New analysis <ArrowUpRight size={17}/></button></div></div></header>
     <main className="site-main">
       <section className="editorial-hero" aria-label="FinPulse overview"><div className="hero-copy"><div className="hero-eyebrow"><span className="live-spark"/> AN EARNINGS INTELLIGENCE STUDIO</div><h1>Find the <em>signal.</em><br/>See the <span className="stroked">whole story.</span></h1><p>Company earnings, market movement, and the media narrative—all in one clear perspective.</p><button onClick={() => { setError(''); setDrawerOpen(true) }} className="hero-action">Analyze a company <ArrowUpRight size={19}/></button></div><div className="hero-art" aria-hidden="true"><div className="art-grid"/><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit orbit-three"/><div className="art-core"><svg viewBox="0 0 250 250" fill="none"><path d="M10 128h50l24-62 45 122 34-72h77" stroke="url(#waveStroke)" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/><defs><linearGradient id="waveStroke" x1="10" y1="128" x2="235" y2="128"><stop stopColor="#ffffff"/><stop offset=".54" stopColor="#88F9C0"/><stop offset="1" stopColor="#ffffff"/></linearGradient></defs></svg></div><span className="orbit-caption top">01 / THE NUMBERS</span><span className="orbit-caption bottom">02 / THE NARRATIVE</span><span className="star star-a">✳</span><span className="star star-b">✦</span></div></section>
       <Reveal className="focus-strip"><div className="focus-mark"><span>{data.ticker.slice(0, 2).toUpperCase()}</span></div><div className="focus-copy"><span>IN FOCUS / {data.ticker}</span><h2>{data.company_name}</h2></div><div className="focus-period"><span>REPORTING PERIOD</span><strong>{data.fiscal_period}</strong></div><div className="focus-date"><span>ANNOUNCED</span><strong>{labelDate(data.announcement_date)}</strong></div><div className={`report-state ${mode === 'demo' ? 'demo-state' : ''}`}><span/>{mode === 'demo' ? 'FICTIONAL DEMO' : 'YOUR ANALYSIS'}</div></Reveal>
@@ -295,6 +311,7 @@ export default function App() {
       {data.warnings.length > 0 && <details className="report-warnings"><summary><Info size={15}/> {data.warnings.length} analysis {data.warnings.length === 1 ? 'note' : 'notes'} <ChevronDown size={14}/></summary><ul>{data.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details>}
       <footer className="site-footer"><Brand/><span>Source-aware earnings intelligence.</span><span>Informational only · Not investment advice</span></footer>
     </main>
+    {libraryOpen && <ReportLibrary onClose={() => setLibraryOpen(false)} onOpen={openSaved}/>}
     {drawerOpen && <AnalysisDrawer initial={input} onClose={() => setDrawerOpen(false)} onSubmit={submit} loading={loading} uploading={uploading} onUpload={importPdf} error={error}/>}
   </div>
 }

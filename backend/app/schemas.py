@@ -11,9 +11,12 @@ class NewsSourceInput(BaseModel):
     text: str | None = Field(default=None, max_length=100_000)
     url: HttpUrl | None = None
     published_at: datetime | None = None
+    headline_only: bool = False
 
     @model_validator(mode='after')
     def require_article(self):
+        if self.headline_only and self.url and self.title and len(self.title.strip()) >= 15:
+            return self
         if not self.url and not (self.text and len(self.text.strip()) >= 50):
             raise ValueError('Provide an article URL or at least 50 characters of article text')
         if self.text and len(self.text.strip()) < 50:
@@ -73,8 +76,8 @@ class SourceAnalysis(BaseModel):
     themes: list[str]
     sentiment_label: Literal['positive', 'negative', 'neutral'] | None = None
     sentiment_method: str | None = None
-    input_origin: Literal['url', 'pasted_text'] = 'pasted_text'
-    extraction_status: Literal['ok', 'failed'] = 'ok'
+    input_origin: Literal['url', 'pasted_text', 'headline_only'] = 'pasted_text'
+    extraction_status: Literal['ok', 'failed', 'metadata_only'] = 'ok'
     warning: str | None = None
 
 

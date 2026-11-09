@@ -36,6 +36,14 @@ Both commands open **two PowerShell windows**: FastAPI on `http://127.0.0.1:8000
 
 The launcher uses `backend/.venv/Scripts/python.exe` and the installed `frontend/node_modules`. If either is missing, it shows the required setup commands rather than silently installing packages. If PowerShell prevents running a script, run `Set-ExecutionPolicy -Scope Process Bypass` in that terminal and retry.
 
+## Research workflow (v0.2)
+
+- **Saved library:** click **Library** to reopen previous reports (across browser/server restarts), delete local reports or compare two reports' similarly defined metrics.
+- **Less manual entry:** from **New analysis**, use **Find SEC filings** to choose a 10-Q/10-K and automatically load its text, or **Import PDF** for an investor earnings-release file.
+- **Automated news discovery:** click **Discover coverage** to find article headlines and links through Google News RSS. Choose up to three different outlets automatically. **If an article cannot be read, it stays headline-only**: no fabricated article analysis, sentiment, or evidence.
+- **One-time SEC setup:** configure `FINPULSE_SEC_USER_AGENT` with your own app/name and real contact email to comply with SEC access requirements. See [docs/research-workflow.md](docs/research-workflow.md).
+- **Multiple periods and companies:** create as many reports as needed; each run analyzes one earnings document, while Library compares two saved reports side by side.
+
 ## Run locally
 
 Requires **Python 3.11+**, **Node.js 20+** and internet access for initial dependency installation. Use two terminals at the repository root.

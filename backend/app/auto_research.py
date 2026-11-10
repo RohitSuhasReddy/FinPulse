@@ -13,7 +13,7 @@ from urllib.parse import urlencode, urlsplit
 import httpx
 from pydantic import BaseModel, Field
 
-from app import cache, research
+from app import cache, research, xbrl
 from app.analysis.service import analyze
 from app.schemas import AnalyzeRequest, AnalyzeResponse, NewsSourceInput, SocialPost
 
@@ -199,6 +199,15 @@ def auto_research(request: AutoResearchInput) -> AnalyzeResponse:
         announcement_date=request.announcement_date,
         market_timing=request.market_timing, news_sources=source_inputs))
     report.data_origin = 'sec_filing'
+    # Tables inside HTML are non-canonical and may collapse values/periods.
+    # SEC structured facts are authoritative for headline numeric cards.
+    # Never fall back to guessed figures when companyfacts cannot be fetched.
+    structured, numeric_notes = xbrl.extract_companyfacts(chosen, filing['fiscal_period'])
+    report.metrics = structured
+    report.extraction_version = 3
+    report.warnings = [w for w in report.warnings if not w.startswith(
+        ('No high-confidence financial metric', 'Some extracted metrics need manual review'))]
+    report.warnings.extend(numeric_notes)
     report.source_document_url = filing['source_url']
     report.source_document_type = filing['form']
     report.warnings.append('SEC filing date was used to discover nearby coverage; it is not necessarily the earnings announcement date.')

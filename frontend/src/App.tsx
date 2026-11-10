@@ -13,6 +13,7 @@ import demoResponse from './data/demo-response.json'
 import { PREVIEW_STOCK } from './data/preview-stock'
 import ResearchTools from './ResearchTools'
 import ReportLibrary from './ReportLibrary'
+import Headlines from './Headlines'
 import AutoResearch, { SocialLens } from './AutoResearch'
 import './research.css'
 
@@ -56,7 +57,8 @@ function EvidenceLink({ evidence, children = 'See source' }: { evidence: Evidenc
     <summary>{children}<ChevronDown size={14} aria-hidden="true" /></summary>
     <div className="evidence-detail">
       <p>“{evidence.text}”</p>
-      <span>{evidence.source_id} · character range {evidence.start_offset}–{evidence.end_offset}</span>
+      <span>{evidence.source_id}{evidence.source_id.startsWith('sec_xbrl:') ? ' · Structured SEC financial fact (not prose)' : ` · character range ${evidence.start_offset}–${evidence.end_offset}`}</span>
+      {evidence.source_url?.startsWith('https://data.sec.gov/') && <a className="quality-note" href={evidence.source_url} target="_blank" rel="noopener noreferrer">View official SEC XBRL source ↗</a>}
     </div>
   </details>
 }
@@ -132,7 +134,7 @@ function MarketChart({ stock, mode, ticker }: { stock: StockContext | null; mode
 }
 
 function Metrics({ data, mode }: { data: Analysis; mode: Mode }) {
-  const outdated = mode !== 'demo' && data.extraction_version !== 2
+  const outdated = mode !== 'demo' && (data.data_origin === 'sec_filing' ? data.extraction_version !== 3 : (data.extraction_version ?? 1) < 2)
   const safe = outdated ? [] : data.metrics.filter(m => m.extraction_status === 'extracted' && m.normalized_value !== null)
   const tiles = safe.slice(0, 4)
   const heldBack = data.metrics.filter(m => m.extraction_status === 'needs_review').length
@@ -151,7 +153,7 @@ function Metrics({ data, mode }: { data: Analysis; mode: Mode }) {
 }
 
 function Earnings({ data, mode }: { data: Analysis; mode: Mode }) {
-  const outdated = mode !== 'demo' && data.extraction_version !== 2
+  const outdated = mode !== 'demo' && (data.data_origin === 'sec_filing' ? data.extraction_version !== 3 : (data.extraction_version ?? 1) < 2)
   const highlights = outdated ? [] : data.summary.filter(item => item.text.length <= 390 && !item.text.includes('|') && !item.text.includes('[FINPULSE_TABLE'))
   const trusted = outdated ? [] : data.metrics.filter(m => m.extraction_status === 'extracted' && m.normalized_value !== null)
   const overview = ['Revenue', 'Net income', 'Diluted EPS', 'Operating income'].map(label => trusted.find(m => m.name === label)).filter((m): m is FinancialMetric => !!m)
@@ -168,17 +170,19 @@ function Earnings({ data, mode }: { data: Analysis; mode: Mode }) {
 function Perspective({ data }: { data: Analysis }) {
   const shared = data.comparison.filter(t => t.relationship === 'shared')
   const other = data.comparison.filter(t => t.relationship !== 'shared')
+  const readable = data.sources.filter(s => s.extraction_status === 'ok')
   return <section className="perspective-section" id="perspectives">
     <MiniLabel number="04">THE OUTSIDE VIEW</MiniLabel>
     <h2>Beyond the <em>headline.</em></h2>
-    <p className="section-subtitle">A look at where coverage overlaps—and where the attention shifts.</p>
+    <p className="section-subtitle">What the press is covering, with direct links. Full-text analysis is available only for readable articles.</p>
+    <Headlines sources={data.sources}/>
     <div className="media-rows">
-      {data.sources.length ? data.sources.map((source, i) => <article className="media-card" key={source.source_id}>
+      {readable.length ? readable.map((source, i) => <article className="media-card" key={source.source_id}>
         <div className="media-card-head"><span className="media-index">{String(i + 1).padStart(2, '0')}</span><span className="media-outlet">{source.outlet}</span>{safeLink(source.url) && <a href={safeLink(source.url)!} target="_blank" rel="noopener noreferrer" aria-label={`Open ${source.outlet} article`}><ExternalLink size={16} /></a>}</div>
         <h3>{source.title}</h3>
         <div className="media-bottom"><span className={`sentiment sentiment-${source.sentiment_label || 'unknown'}`}>{source.sentiment_label ? `${source.sentiment_label} tone` : 'Tone unavailable'}</span><span>ESTIMATED LANGUAGE TONE</span></div>
         {source.extraction_status !== 'ok' ? <p className="media-warning">{source.warning ?? 'Article unavailable.'}</p> : source.summary[0] && <div className="media-excerpt"><p>{source.summary[0].text}</p><EvidenceLink evidence={source.summary[0].evidence}>Source passage</EvidenceLink></div>}
-      </article>) : <div className="detail-empty">No articles added yet. Create an analysis with news sources to compare perspectives.</div>}
+      </article>) : <div className="detail-empty">No full article bodies were accessible for analysis. Discovered headlines above still link to the original sources, without fabricated summaries.</div>}
     </div>
     <div className="perspective-compare" id="comparison"><div className="comparison-heading"><span>THE OVERLAP</span><strong>{shared.length} shared {shared.length === 1 ? 'theme' : 'themes'}</strong></div>
       {shared.length ? <div className="overlap-list">{shared.slice(0, 6).map(t => <details className="overlap-item" key={t.theme}><summary><span className="mint-bullet" />{t.theme}<ChevronDown size={15}/></summary><div className="overlap-evidence">{t.earnings_evidence && <EvidenceLink evidence={t.earnings_evidence}>Company evidence</EvidenceLink>}{t.news_evidence.slice(0, 3).map((ev, i) => <EvidenceLink key={`${ev.source_id}-${i}`} evidence={ev.evidence}>{ev.outlet} evidence</EvidenceLink>)}</div></details>)}</div> : <p className="overlap-empty">No shared themes identified in these sources.</p>}

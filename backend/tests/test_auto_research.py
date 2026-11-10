@@ -26,6 +26,9 @@ def prepare(monkeypatch):
         SocialPost(platform='Bluesky', author='analyst.example', url='https://bsky.app/profile/analyst.example/post/abc123',
                    text='ExampleCorp earnings reflect rapidly growing revenue.', created_at='2026-07-23T12:00:00Z', likes=6)])
     monkeypatch.setattr(ar, 'x_posts', lambda company, ticker, around: [])
+    from app.analysis.metrics import extract_metrics
+    monkeypatch.setattr(ar.xbrl, 'extract_companyfacts',
+                        lambda filing, period: (extract_metrics(TEXT, period), ['SEC structured facts test fixture']))
     monkeypatch.setattr(cache, 'store', lambda result: None)
 
 

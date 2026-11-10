@@ -78,10 +78,13 @@ def compare_reports(left: AnalyzeResponse, right: AnalyzeResponse) -> dict:
     def key(m):
         return (m.name.lower(), m.unit, m.currency, m.metric_variant)
 
+    def eligible(report):
+        return report.extraction_version >= 2 and (
+            report.data_origin != 'sec_filing' or report.extraction_version >= 3)
     left_map = {key(m): m for m in left.metrics if m.normalized_value is not None
-                and m.extraction_status == 'extracted'} if left.extraction_version >= 2 else {}
+                and m.extraction_status == 'extracted'} if eligible(left) else {}
     right_map = {key(m): m for m in right.metrics if m.normalized_value is not None
-                 and m.extraction_status == 'extracted'} if right.extraction_version >= 2 else {}
+                 and m.extraction_status == 'extracted'} if eligible(right) else {}
     common = sorted(left_map.keys() & right_map.keys())
     rows = []
     for k in common:
@@ -97,8 +100,8 @@ def compare_reports(left: AnalyzeResponse, right: AnalyzeResponse) -> dict:
         notes.append('Different companies: numbers are side by side, not a like-for-like performance ranking.')
     if left.fiscal_period == right.fiscal_period and left.ticker == right.ticker:
         notes.append('Both reports have the same stated fiscal period. Check whether these are duplicate analyses.')
-    if left.extraction_version < 2 or right.extraction_version < 2:
-        notes.append('One or both analyses used the old financial extractor. Re-run those reports before comparing numeric values.')
+    if not eligible(left) or not eligible(right):
+        notes.append('One or both analyses use an older financial extractor. Re-run SEC research to compare verified structured facts.')
     if not rows:
         notes.append('No extracted metrics share the same name, unit, currency and reported/adjusted basis.')
     return {'left': {'analysis_id': left.analysis_id, 'ticker': left.ticker, 'company_name': left.company_name,

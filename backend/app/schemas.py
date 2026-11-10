@@ -46,6 +46,7 @@ class Evidence(BaseModel):
     text: str
     start_offset: int = Field(ge=0)
     end_offset: int = Field(ge=0)
+    source_url: str | None = None  # Structured SEC facts link to their official JSON dataset.
 
 
 class FinancialMetric(BaseModel):

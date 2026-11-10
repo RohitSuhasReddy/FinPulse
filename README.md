@@ -144,6 +144,13 @@ frontend/
 docs/architecture.md      # design, limitations and security notes
 ```
 
+## Reliable financial facts and headline links (v0.5)
+
+- **Automatic SEC research now reads official companyfacts XBRL JSON** for reported revenue, net income, operating income, and diluted EPS. Figures must match the selected SEC accession, filing form, quarter/year duration, period-end date, and USD units. No guessing from flattened tables; if official facts are unavailable, numbers are withheld with a notice.
+- **News headlines remain useful even if publishers block article scraping.** The Outside View lists discovered headlines, publishers and clickable links. GDELT links lead to publisher pages; when RSS is the only source, links may open a Google News listing instead. Headlines are not summarized as if the full article were read.
+- Older SEC analyses in the Library are flagged for reanalysis before numeric comparisons. Run Auto research again for SEC XBRL-backed figures.
+- Morningstar offers licensed Direct Web Services and Equity Data APIs, but there is no unrestricted free Morningstar API. This app does not scrape or bypass Morningstar. See [Morningstar Direct Web Services](https://www.morningstar.com/business/products/direct-web-services).
+
 ## Financial extraction safeguards (v0.4)
 
 - SEC HTML statement rows are kept separate from narrative text; the parser scales currency figures only when the report explicitly specifies units such as **in millions**.

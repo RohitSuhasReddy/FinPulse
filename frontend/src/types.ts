@@ -1,4 +1,4 @@
-export interface Evidence { source_id: string; text: string; start_offset: number; end_offset: number }
+export interface Evidence { source_id: string; text: string; start_offset: number; end_offset: number; source_url?: string | null }
 export interface Highlight { text: string; evidence: Evidence }
 export interface FinancialMetric {
   name: string; raw_value: string; normalized_value: number | null; unit: string;

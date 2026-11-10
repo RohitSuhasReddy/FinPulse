@@ -44,7 +44,7 @@ def test_invalid_ticker_rejected():
 
 def test_news_limit():
     body = request_body()
-    body["news_sources"] *= 4
+    body["news_sources"] *= 9
     assert client.post("/api/v1/analyze", json=body).status_code == 422
 
 

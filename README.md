@@ -144,6 +144,14 @@ frontend/
 docs/architecture.md      # design, limitations and security notes
 ```
 
+## Financial extraction safeguards (v0.4)
+
+- SEC HTML statement rows are kept separate from narrative text; the parser scales currency figures only when the report explicitly specifies units such as **in millions**.
+- A quarterly card is extracted only from a stated three-month financial statement, not a six-month cash-flow total. Uncertain amounts are hidden from featured cards rather than presented as small dollar values.
+- The company view highlights concise narrative sentences and a compact, sourced metrics snapshot. Long financial tables are not displayed as prose summaries.
+- Saved analyses created with the old extraction engine remain in Library but are flagged for reanalysis; cross-report comparisons exclude old, unverified figures.
+- This is a conservative baseline, not audited XBRL validation. For financial decisions, check the underlying SEC document or company earnings release.
+
 ## Known limitations
 
 - Financial extraction relies on patterns and may miss context, tables, or alternative presentation formats; check each passage before drawing conclusions.

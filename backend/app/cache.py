@@ -59,6 +59,7 @@ def list_reports(ticker: str | None = None, limit: int = 100) -> list[dict]:
              'analyzed_at': row['created_at'],
              'fiscal_period': data.get('fiscal_period'),
              'announcement_date': data.get('announcement_date'),
+             'extraction_version': data.get('extraction_version', 1),
              'metric_count': len(data.get('metrics', [])),
              'news_count': len(data.get('sources', []))}
             for row in rows for data in [loads(row['payload'])]]
@@ -78,9 +79,9 @@ def compare_reports(left: AnalyzeResponse, right: AnalyzeResponse) -> dict:
         return (m.name.lower(), m.unit, m.currency, m.metric_variant)
 
     left_map = {key(m): m for m in left.metrics if m.normalized_value is not None
-                and m.extraction_status == 'extracted'}
+                and m.extraction_status == 'extracted'} if left.extraction_version >= 2 else {}
     right_map = {key(m): m for m in right.metrics if m.normalized_value is not None
-                 and m.extraction_status == 'extracted'}
+                 and m.extraction_status == 'extracted'} if right.extraction_version >= 2 else {}
     common = sorted(left_map.keys() & right_map.keys())
     rows = []
     for k in common:
@@ -96,6 +97,8 @@ def compare_reports(left: AnalyzeResponse, right: AnalyzeResponse) -> dict:
         notes.append('Different companies: numbers are side by side, not a like-for-like performance ranking.')
     if left.fiscal_period == right.fiscal_period and left.ticker == right.ticker:
         notes.append('Both reports have the same stated fiscal period. Check whether these are duplicate analyses.')
+    if left.extraction_version < 2 or right.extraction_version < 2:
+        notes.append('One or both analyses used the old financial extractor. Re-run those reports before comparing numeric values.')
     if not rows:
         notes.append('No extracted metrics share the same name, unit, currency and reported/adjusted basis.')
     return {'left': {'analysis_id': left.analysis_id, 'ticker': left.ticker, 'company_name': left.company_name,

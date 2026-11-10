@@ -61,6 +61,11 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         ))
     metrics = extract_metrics(earnings, payload.fiscal_period)
     themes, comparison = compare(earnings, sources)
+    highlights = summarize(earnings, 'earnings')
+    if '[FINPULSE_TABLE_START]' in earnings:
+        warnings.append('SEC financial statements use explicitly labeled quarterly columns and units. Unclear tables are excluded instead of guessing.')
+    if not highlights:
+        warnings.append('No reliable narrative highlights found; table rows and dense numeric passages were excluded.')
     if not sources:
         warnings.append('No usable news passages; add article text or an accessible URL for cross-source analysis.')
     if not metrics:
@@ -72,7 +77,7 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
     return AnalyzeResponse(analysis_id=digest, company_name=payload.company_name,
         ticker=payload.ticker.upper(), fiscal_period=payload.fiscal_period,
         announcement_date=payload.announcement_date, market_timing=payload.market_timing,
-        analyzed_at=datetime.now(timezone.utc), summary=summarize(earnings, 'earnings'),
+        analyzed_at=datetime.now(timezone.utc), summary=highlights,
         metrics=metrics, earnings_themes=themes, sources=source_responses,
-        comparison=comparison, warnings=warnings,
+        comparison=comparison, warnings=warnings, extraction_version=2,
         sentiment_model=source_responses[0].sentiment_method if source_responses and source_responses[0].sentiment_method else 'rules-v1')

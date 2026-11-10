@@ -241,3 +241,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   *,*::before,*::after { scroll-behavior: auto!important; animation: none!important; transition: none!important; }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* Extraction quality: restrained factual brief ahead of source excerpts. */
+.quarter-digest { margin: 26px 0 34px; padding: 25px 27px; border: 1px solid rgba(136,249,192,.22);
+  border-radius: 18px; background: linear-gradient(120deg,rgba(136,249,192,.08),rgba(99,49,251,.04)); }
+.quarter-digest > span { display: block; font-size: 10px; font-weight: 800; letter-spacing: .15em; color: var(--mint); }
+.quarter-digest p { margin: 13px 0 12px; font-weight: 650; font-size: clamp(16px,1.8vw,22px); line-height: 1.6; color: var(--ink); }
+.quarter-digest small { display:block; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.quality-note { margin: 15px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+.quality-note a { color: var(--mint); text-decoration: underline; text-underline-offset: 4px; }
+.metrics-missing { grid-column: 1 / -1; line-height: 1.7; }

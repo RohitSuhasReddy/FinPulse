@@ -29,6 +29,7 @@ export interface Analysis {
   data_origin: 'user_supplied_text' | 'sec_filing';
   source_document_url?: string | null; source_document_type?: string | null;
   social_posts?: SocialPost[];
+  extraction_version?: number;
 }
 export interface NewsInput { title?: string; outlet?: string; text?: string; url?: string; headline_only?: boolean }
 export interface AnalysisInput {

@@ -122,6 +122,7 @@ class AnalyzeResponse(BaseModel):
     source_document_url: str | None = None
     source_document_type: str | None = None
     social_posts: list[SocialPost] = Field(default_factory=list)
+    extraction_version: int = 1  # Older saved reports are automatically treated as unverified
 
 
 class ArticleRequest(BaseModel):

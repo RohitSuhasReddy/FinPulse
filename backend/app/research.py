@@ -96,11 +96,10 @@ def import_filing(ticker: str, accession: str) -> dict:
     acc_clean = accession.replace('-', '')
     html = _get(f'https://www.sec.gov/Archives/edgar/data/{cik}/{acc_clean}/{match["document"]}',
                 sec=True, max_bytes=12_000_000)
-    soup = BeautifulSoup(html, 'html.parser')
-    for element in soup(['script', 'style', 'noscript', 'ix:header']):
-        element.decompose()
-    # Preserve text boundaries where possible, including table cells.
-    text = re.sub(r'[\t ]+', ' ', soup.get_text(separator=' ', strip=True))[:350_000]
+    from app.analysis.filing_text import extract_filing_text
+    # Preserve statement rows and their unit headings; never collapse an entire
+    # financial table into one sentence.
+    text = extract_filing_text(html)
     if len(text) < 80:
         raise ResearchError('Filing does not contain usable extracted text. Try downloading the PDF instead.')
     year = match['period_end'][:4]

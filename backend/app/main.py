@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import AnalyzeRequest, AnalyzeResponse, ArticleRequest, ArticleResponse, StockContextResponse
 from app.analysis.service import analyze
 from app.ingest import fetch_article, ArticleError
-from app.stock import get_stock
+from app.stock import get_stock, get_recent_stock
 from app import cache
 
 app = FastAPI(title='FinPulse API', version='1.0.0',
@@ -161,3 +161,11 @@ def analyze_automatically(payload: AutoResearchInput) -> AnalyzeResponse:
         raise HTTPException(status, str(exc)) from exc
     except (ValueError, OSError) as exc:
         raise HTTPException(503, 'Automated research unavailable. Check data source connectivity or try a manual PDF.') from exc
+
+
+@app.get('/api/v1/stocks/{ticker}/recent', response_model=StockContextResponse)
+def stock_recent_context(ticker: str) -> StockContextResponse:
+    try:
+        return get_recent_stock(ticker)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc

@@ -84,7 +84,7 @@ function MarketChart({ stock, mode, ticker }: { stock: StockContext | null; mode
   return <section className="market-section" id="market" aria-label="Market context">
     <div className="market-topline"><MiniLabel number="01">MARKET LENS</MiniLabel><span className="market-context">{mode === 'demo' ? 'ILLUSTRATIVE PRICE SERIES' : `${ticker} · HISTORICAL DATA`}</span></div>
     <div className="market-head">
-      <div><h2>The market <em>in motion.</em></h2><p>A closer look at the trading window surrounding earnings.</p></div>
+      <div><h2>The market <em>in motion.</em></h2><p>{mode === 'demo' || stock?.earnings_date ? 'A closer look at the trading window surrounding earnings.' : 'Recent daily price and volume, without an assumed earnings event.'}</p></div>
       <div className="chart-tabs" role="group" aria-label="Chart view">
         <button className={tab === 'price' ? 'selected' : ''} aria-pressed={tab === 'price'} onClick={() => setTab('price')}>Price</button>
         <button className={tab === 'volume' ? 'selected' : ''} aria-pressed={tab === 'volume'} onClick={() => setTab('volume')}>Volume</button>
@@ -103,7 +103,7 @@ function MarketChart({ stock, mode, ticker }: { stock: StockContext | null; mode
           </strong><small>First to last plotted close</small></div>
         </div>
         <div className="chart-composition" key={`${mode}-${tab}-${ticker}`}>
-          <div className="main-chart" role="img" aria-label={`${ticker} ${tab === 'price' ? 'daily closing price' : 'trading volume'} chart with earnings event marker`}>
+          <div className="main-chart" role="img" aria-label={`${ticker} ${tab === 'price' ? 'daily closing price' : 'trading volume'} chart${marker ? ' with earnings event marker' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               {tab === 'price' ? <AreaChart data={points} margin={{ top: 32, right: 10, left: -12, bottom: 10 }}>
                 <defs><linearGradient id="priceUnder" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6331FB" stopOpacity="0.43" /><stop offset="67%" stopColor="#6331FB" stopOpacity="0.08" /><stop offset="100%" stopColor="#6331FB" stopOpacity="0" /></linearGradient></defs>
@@ -123,9 +123,9 @@ function MarketChart({ stock, mode, ticker }: { stock: StockContext | null; mode
               </BarChart>}
             </ResponsiveContainer>
           </div>
-          <div className="chart-below"><div className="chart-key"><span className="key-line" />{tab === 'price' ? 'DAILY CLOSE' : 'DAILY VOLUME'}</div><div className="chart-key"><span className="key-event" />EARNINGS DATE</div><div className="chart-key chart-hint">HOVER TO EXPLORE <span aria-hidden="true">↗</span></div></div>
+          <div className="chart-below"><div className="chart-key"><span className="key-line" />{tab === 'price' ? 'DAILY CLOSE' : 'DAILY VOLUME'}</div>{marker && <div className="chart-key"><span className="key-event" />EARNINGS DATE</div>}<div className="chart-key chart-hint">HOVER TO EXPLORE <span aria-hidden="true">↗</span></div></div>
         </div>
-      </> : <div className="chart-unavailable"><div className="ghost-wave" aria-hidden="true"><svg viewBox="0 0 360 120"><path d="M0 85L45 80L88 95L138 46L190 66L225 31L270 48L310 20L360 45" /></svg></div><strong>Market chart awaiting data</strong><span>Add an earnings date to retrieve historical price and volume for this ticker.</span></div>}
+      </> : <div className="chart-unavailable"><div className="ghost-wave" aria-hidden="true"><svg viewBox="0 0 360 120"><path d="M0 85L45 80L88 95L138 46L190 66L225 31L270 48L310 20L360 45" /></svg></div><strong>Market chart awaiting data</strong><span>Historical price data unavailable. Check connectivity or the ticker.</span></div>}
       <div className="market-footnote"><span>{mode === 'demo' ? 'Fictional market series. For layout preview only.' : stock?.warning ?? 'Closing prices and volumes are historical; movement does not establish cause.'}</span><span>{points.length ? `${points.length} SESSIONS` : 'NO SESSIONS'}</span></div>
     </div>
   </section>
@@ -284,6 +284,8 @@ export default function App() {
       if (report.announcement_date) {
         const params = new URLSearchParams({ announcement_date: report.announcement_date, market_timing: report.market_timing })
         fetch(`/api/v1/stocks/${encodeURIComponent(report.ticker)}?${params}`).then(r => r.ok ? r.json() as Promise<StockContext> : null).then(setStock).catch(() => setStock(null))
+      } else {
+        fetch('/api/v1/stocks/' + encodeURIComponent(report.ticker) + '/recent').then(r => r.ok ? r.json() as Promise<StockContext> : null).then(setStock).catch(() => setStock(null))
       }
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not connect to the server. Check that the backend is running on port 8000.') }
     finally { setLoading(false) }
@@ -297,6 +299,9 @@ export default function App() {
       fetch(`/api/v1/stocks/${encodeURIComponent(report.ticker)}?${params}`)
         .then(r => r.ok ? r.json() as Promise<StockContext> : null)
         .then(setStock).catch(() => setStock(null))
+    } else {
+      fetch('/api/v1/stocks/' + encodeURIComponent(report.ticker) + '/recent')
+        .then(r => r.ok ? r.json() as Promise<StockContext> : null).then(setStock).catch(() => setStock(null))
     }
   }
 

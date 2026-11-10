@@ -45,6 +45,7 @@ The launcher uses `backend/.venv/Scripts/python.exe` and the installed `frontend
 - X is optional and requires `FINPULSE_X_BEARER_TOKEN` and an account with potentially billable X API read access. Instagram is **not scraped**, because generic public keyword searches are not openly available through official APIs.
 - Social posts are displayed as **public opinions**, never as company-reported financial facts.
 - A SEC filing is a **10-Q/10-K**, not an earnings call; dates are kept distinct.
+- If an earnings date is unknown, the stock chart automatically shows recent historical price and volume without an earnings marker.
 
 ## Research workflow (v0.2)
 

@@ -38,7 +38,7 @@ export interface AnalysisInput {
 }
 export interface StockPoint { date: string; close: number; volume: number }
 export interface StockContext {
-  ticker: string; points: StockPoint[]; earnings_date: string; market_timing: string;
+  ticker: string; points: StockPoint[]; earnings_date: string | null; market_timing: string;
   first_session_on_or_after_date: string | null; previous_session_date: string | null;
   session_close_change_percent: number | null; price_basis: string; currency: string | null; warning: string | null;
 }

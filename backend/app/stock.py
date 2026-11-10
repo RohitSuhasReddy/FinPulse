@@ -54,3 +54,17 @@ def get_stock(ticker: str, earnings: date, timing: str = 'unknown') -> StockCont
                                 first_session_on_or_after_date=first,
                                 previous_session_date=prior,
                                 session_close_change_percent=pct, warning=warning)
+
+
+def get_recent_stock(ticker: str) -> StockContextResponse:
+    """Recent daily prices without assuming an earnings announcement date."""
+    result = get_stock(ticker, date.today() - timedelta(days=16), 'unknown')
+    result.earnings_date = None
+    result.market_timing = 'unknown'
+    result.first_session_on_or_after_date = None
+    result.previous_session_date = None
+    result.session_close_change_percent = None
+    result.warning = ('Recent historical daily prices and volume; no earnings event is inferred.'
+                      if result.points else
+                      'Recent historical prices unavailable. Check the ticker and network connection.')
+    return result

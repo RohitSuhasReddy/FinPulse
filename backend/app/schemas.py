@@ -147,7 +147,7 @@ class StockContextResponse(BaseModel):
     currency: str | None = None
     price_basis: str = 'Unadjusted daily close'
     points: list[StockPoint]
-    earnings_date: date
+    earnings_date: date | None = None
     market_timing: str = 'unknown'
     first_session_on_or_after_date: date | None = None
     previous_session_date: date | None = None

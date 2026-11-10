@@ -95,7 +95,7 @@ def extract_companyfacts(filing: dict, fiscal_period: str) -> tuple[list[Financi
                                   start_offset=0, end_offset=0, source_url=source_url),
             ))
             break
-    note = (f'{len(results)} reported financial figures sourced from official SEC XBRL facts '
+    note = (f'{len(results)} reported financial figures sourced from official structured SEC XBRL facts '
             f'for {form}, accession {accession}, period ending {period_end}. '
             'Only matching reporting periods and monetary units were accepted.')
     if not results:

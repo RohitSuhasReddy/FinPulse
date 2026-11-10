@@ -16,13 +16,19 @@ export interface ThemeComparison {
   earnings_evidence: Evidence | null;
   news_evidence: { source_id: string; outlet: string; evidence: Evidence }[];
 }
+export interface SocialPost {
+  platform: 'Bluesky' | 'X'; author: string; url: string;
+  text: string; created_at: string; likes: number;
+}
 export interface Analysis {
   analysis_id: string; company_name: string; ticker: string; fiscal_period: string;
   announcement_date: string | null; market_timing: 'before_open' | 'after_close' | 'unknown';
   analyzed_at: string; summary: Highlight[]; metrics: FinancialMetric[];
   earnings_themes: string[]; sources: SourceAnalysis[];
   comparison: ThemeComparison[]; warnings: string[]; sentiment_model: string;
-  data_origin: 'user_supplied_text';
+  data_origin: 'user_supplied_text' | 'sec_filing';
+  source_document_url?: string | null; source_document_type?: string | null;
+  social_posts?: SocialPost[];
 }
 export interface NewsInput { title?: string; outlet?: string; text?: string; url?: string; headline_only?: boolean }
 export interface AnalysisInput {

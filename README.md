@@ -36,6 +36,16 @@ Both commands open **two PowerShell windows**: FastAPI on `http://127.0.0.1:8000
 
 The launcher uses `backend/.venv/Scripts/python.exe` and the installed `frontend/node_modules`. If either is missing, it shows the required setup commands rather than silently installing packages. If PowerShell prevents running a script, run `Set-ExecutionPolicy -Scope Process Bypass` in that terminal and retry.
 
+## Automatic research mode (v0.3)
+
+**Enter a ticker and click Auto research.** FinPulse selects the latest SEC filing or a chosen reporting period, searches GDELT for relevant online coverage, attempts to extract readable article bodies, and queries public Bluesky discussion. It saves results in the Library, with an optional comparison of reports. A valid **SEC User-Agent** (name/app plus contact email) must be configured once; see [Auto research setup](docs/auto-research.md).
+
+- No news URLs or transcript pasting required for supported SEC-listed companies.
+- When publishers block an article, only the **headline and link** are retained; FinPulse does not fabricate its text, sentiment, or source evidence.
+- X is optional and requires `FINPULSE_X_BEARER_TOKEN` and an account with potentially billable X API read access. Instagram is **not scraped**, because generic public keyword searches are not openly available through official APIs.
+- Social posts are displayed as **public opinions**, never as company-reported financial facts.
+- A SEC filing is a **10-Q/10-K**, not an earnings call; dates are kept distinct.
+
 ## Research workflow (v0.2)
 
 - **Saved library:** click **Library** to reopen previous reports (across browser/server restarts), delete local reports or compare two reports' similarly defined metrics.

@@ -13,6 +13,7 @@ import demoResponse from './data/demo-response.json'
 import { PREVIEW_STOCK } from './data/preview-stock'
 import ResearchTools from './ResearchTools'
 import ReportLibrary from './ReportLibrary'
+import AutoResearch, { SocialLens } from './AutoResearch'
 import './research.css'
 
 type Mode = 'demo' | 'live'
@@ -239,6 +240,7 @@ export default function App() {
   const [stock, setStock] = useState<StockContext | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
+  const [autoOpen, setAutoOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -300,18 +302,20 @@ export default function App() {
 
   return <div className="app-page" id="top">
     <div className="global-aura" aria-hidden="true" />
-    <header className="site-header"><div className="header-inner"><Brand/><nav className="site-nav" aria-label="Main sections"><a href="#market">Market lens</a><a href="#earnings">Earnings</a><a href="#perspectives">Perspectives</a></nav><div className="header-actions"><button className="demo-reset" onClick={() => setLibraryOpen(true)}><LibraryBig size={15}/> <span>Library</span></button><button className="demo-reset" onClick={resetDemo}><RotateCcw size={15}/> <span>Demo</span></button><button className="header-cta" onClick={() => { setError(''); setDrawerOpen(true) }}>New analysis <ArrowUpRight size={17}/></button></div></div></header>
+    <header className="site-header"><div className="header-inner"><Brand/><nav className="site-nav" aria-label="Main sections"><a href="#market">Market lens</a><a href="#earnings">Earnings</a><a href="#perspectives">Perspectives</a></nav><div className="header-actions"><button className="demo-reset" onClick={() => setLibraryOpen(true)}><LibraryBig size={15}/> <span>Library</span></button><button className="demo-reset" onClick={resetDemo}><RotateCcw size={15}/> <span>Demo</span></button><button className="header-cta" onClick={() => { setError(''); setAutoOpen(true) }}>Auto research <ArrowUpRight size={17}/></button></div></div></header>
     <main className="site-main">
-      <section className="editorial-hero" aria-label="FinPulse overview"><div className="hero-copy"><div className="hero-eyebrow"><span className="live-spark"/> AN EARNINGS INTELLIGENCE STUDIO</div><h1>Find the <em>signal.</em><br/>See the <span className="stroked">whole story.</span></h1><p>Company earnings, market movement, and the media narrative—all in one clear perspective.</p><button onClick={() => { setError(''); setDrawerOpen(true) }} className="hero-action">Analyze a company <ArrowUpRight size={19}/></button></div><div className="hero-art" aria-hidden="true"><div className="art-grid"/><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit orbit-three"/><div className="art-core"><svg viewBox="0 0 250 250" fill="none"><path d="M10 128h50l24-62 45 122 34-72h77" stroke="url(#waveStroke)" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/><defs><linearGradient id="waveStroke" x1="10" y1="128" x2="235" y2="128"><stop stopColor="#ffffff"/><stop offset=".54" stopColor="#88F9C0"/><stop offset="1" stopColor="#ffffff"/></linearGradient></defs></svg></div><span className="orbit-caption top">01 / THE NUMBERS</span><span className="orbit-caption bottom">02 / THE NARRATIVE</span><span className="star star-a">✳</span><span className="star star-b">✦</span></div></section>
+      <section className="editorial-hero" aria-label="FinPulse overview"><div className="hero-copy"><div className="hero-eyebrow"><span className="live-spark"/> AN EARNINGS INTELLIGENCE STUDIO</div><h1>Find the <em>signal.</em><br/>See the <span className="stroked">whole story.</span></h1><p>Company earnings, market movement, and the media narrative—all in one clear perspective.</p><button onClick={() => { setError(''); setAutoOpen(true) }} className="hero-action">Research any stock <ArrowUpRight size={19}/></button></div><div className="hero-art" aria-hidden="true"><div className="art-grid"/><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit orbit-three"/><div className="art-core"><svg viewBox="0 0 250 250" fill="none"><path d="M10 128h50l24-62 45 122 34-72h77" stroke="url(#waveStroke)" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/><defs><linearGradient id="waveStroke" x1="10" y1="128" x2="235" y2="128"><stop stopColor="#ffffff"/><stop offset=".54" stopColor="#88F9C0"/><stop offset="1" stopColor="#ffffff"/></linearGradient></defs></svg></div><span className="orbit-caption top">01 / THE NUMBERS</span><span className="orbit-caption bottom">02 / THE NARRATIVE</span><span className="star star-a">✳</span><span className="star star-b">✦</span></div></section>
       <Reveal className="focus-strip"><div className="focus-mark"><span>{data.ticker.slice(0, 2).toUpperCase()}</span></div><div className="focus-copy"><span>IN FOCUS / {data.ticker}</span><h2>{data.company_name}</h2></div><div className="focus-period"><span>REPORTING PERIOD</span><strong>{data.fiscal_period}</strong></div><div className="focus-date"><span>ANNOUNCED</span><strong>{labelDate(data.announcement_date)}</strong></div><div className={`report-state ${mode === 'demo' ? 'demo-state' : ''}`}><span/>{mode === 'demo' ? 'FICTIONAL DEMO' : 'YOUR ANALYSIS'}</div></Reveal>
       <Reveal><MarketChart stock={stock} mode={mode} ticker={data.ticker}/></Reveal>
       <Reveal><Metrics data={data}/></Reveal>
       <Reveal className="narrative-grid"><Earnings data={data}/><Perspective data={data}/></Reveal>
-      <Reveal className="closing-band"><div><span className="closing-kicker">FOLLOW THE EVIDENCE</span><h2>Every number<br/>has a <em>story.</em></h2></div><div className="closing-action"><p>Ready to explore a different company?</p><button onClick={() => { setError(''); setDrawerOpen(true) }}>Start another analysis <ArrowUpRight size={18}/></button></div><div className="closing-decoration" aria-hidden="true">✳</div></Reveal>
+      {data.social_posts && data.social_posts.length > 0 && <Reveal><SocialLens posts={data.social_posts}/></Reveal>}
+      <Reveal className="closing-band"><div><span className="closing-kicker">FOLLOW THE EVIDENCE</span><h2>Every number<br/>has a <em>story.</em></h2></div><div className="closing-action"><p>Ready to explore a different company?</p><button onClick={() => { setError(''); setAutoOpen(true) }}>Research another stock <ArrowUpRight size={18}/></button></div><div className="closing-decoration" aria-hidden="true">✳</div></Reveal>
       {data.warnings.length > 0 && <details className="report-warnings"><summary><Info size={15}/> {data.warnings.length} analysis {data.warnings.length === 1 ? 'note' : 'notes'} <ChevronDown size={14}/></summary><ul>{data.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details>}
       <footer className="site-footer"><Brand/><span>Source-aware earnings intelligence.</span><span>Informational only · Not investment advice</span></footer>
     </main>
     {libraryOpen && <ReportLibrary onClose={() => setLibraryOpen(false)} onOpen={openSaved}/>}
+    {autoOpen && <AutoResearch onClose={() => setAutoOpen(false)} onComplete={openSaved} onManual={() => { setAutoOpen(false); setDrawerOpen(true) }}/>}
     {drawerOpen && <AnalysisDrawer initial={input} onClose={() => setDrawerOpen(false)} onSubmit={submit} loading={loading} uploading={uploading} onUpload={importPdf} error={error}/>}
   </div>
 }

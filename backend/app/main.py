@@ -2,7 +2,8 @@
 from datetime import date
 from typing import Literal
 from pydantic import BaseModel, Field
-from app import research
+from app import research, auto_research
+from app.auto_research import AutoResearchInput
 from fastapi import FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import AnalyzeRequest, AnalyzeResponse, ArticleRequest, ArticleResponse, StockContextResponse
@@ -148,3 +149,15 @@ def import_sec_filing(selection: FilingSelection) -> dict:
     except research.ResearchError as exc:
         status = 503 if 'FINPULSE_SEC_USER_AGENT' in str(exc) or 'unavailable' in str(exc) else 422
         raise HTTPException(status, str(exc)) from exc
+
+
+@app.post('/api/v1/research/auto', response_model=AnalyzeResponse)
+def analyze_automatically(payload: AutoResearchInput) -> AnalyzeResponse:
+    """A ticker-first, one-shot research request. Each provider can fail independently."""
+    try:
+        return auto_research.auto_research(payload)
+    except research.ResearchError as exc:
+        status = 503 if ('FINPULSE_SEC_USER_AGENT' in str(exc) or 'unavailable' in str(exc)) else 422
+        raise HTTPException(status, str(exc)) from exc
+    except (ValueError, OSError) as exc:
+        raise HTTPException(503, 'Automated research unavailable. Check data source connectivity or try a manual PDF.') from exc

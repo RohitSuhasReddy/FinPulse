@@ -31,7 +31,7 @@ class AnalyzeRequest(BaseModel):
     earnings_text: str = Field(min_length=80, max_length=350_000)
     announcement_date: date | None = None
     market_timing: Literal['before_open', 'after_close', 'unknown'] = 'unknown'
-    news_sources: list[NewsSourceInput] = Field(default_factory=list, max_length=3)
+    news_sources: list[NewsSourceInput] = Field(default_factory=list, max_length=8)
 
     @field_validator('company_name', 'fiscal_period', 'earnings_text')
     @classmethod
@@ -94,6 +94,15 @@ class ThemeComparison(BaseModel):
     news_evidence: list[ThemeEvidence] = Field(default_factory=list)
 
 
+class SocialPost(BaseModel):
+    platform: Literal['Bluesky', 'X']
+    author: str
+    url: str
+    text: str
+    created_at: str
+    likes: int = Field(default=0, ge=0)
+
+
 class AnalyzeResponse(BaseModel):
     analysis_id: str
     company_name: str
@@ -109,7 +118,10 @@ class AnalyzeResponse(BaseModel):
     comparison: list[ThemeComparison]
     warnings: list[str]
     sentiment_model: str = 'rules-v1'
-    data_origin: Literal['user_supplied_text'] = 'user_supplied_text'
+    data_origin: Literal['user_supplied_text', 'sec_filing'] = 'user_supplied_text'
+    source_document_url: str | None = None
+    source_document_type: str | None = None
+    social_posts: list[SocialPost] = Field(default_factory=list)
 
 
 class ArticleRequest(BaseModel):

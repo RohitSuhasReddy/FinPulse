@@ -1,12 +1,10 @@
 """One analysis per company and period, preserving independent source identity."""
 from datetime import datetime, timezone
 from hashlib import sha256
-from urllib.parse import urlsplit
 from app.analysis.text import clean_text, detected_themes, summarize
 from app.analysis.metrics import extract_metrics
 from app.analysis.comparison import compare
 from app.analysis.sentiment import classify
-from app.ingest import ArticleError, fetch_article
 from app.schemas import AnalyzeRequest, AnalyzeResponse, SourceAnalysis
 
 
@@ -21,35 +19,21 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         text = clean_text(item.text or '')
         published, url = item.published_at, str(item.url) if item.url else None
         origin = 'pasted_text' if text else 'url'
-        # RSS discovery is metadata, not an article. Do not turn headlines
-        # into source-backed news claims or sentiment if the body is inaccessible.
+        # A user-supplied headline/link is metadata, not an article body.
         def metadata_only(reason: str) -> None:
             warnings.append(f'News source {idx}: {reason}')
             source_responses.append(SourceAnalysis(
                 source_id=sid, title=title or url or f'News {idx}',
-                outlet=outlet or 'Discovered news', url=url, published_at=published,
+                outlet=outlet or 'News source', url=url, published_at=published,
                 summary=[], themes=[], sentiment_label=None, sentiment_method=None,
                 input_origin='headline_only', extraction_status='metadata_only',
                 warning=reason))
-        if item.headline_only and url and urlsplit(url).hostname == 'news.google.com':
-            metadata_only('Headline discovered via news RSS; the linked article body was not available for analysis.')
+        if item.headline_only:
+            metadata_only('Only a headline and source link were supplied; no article summary can be generated.')
             continue
         if not text and url:
-            try:
-                article = fetch_article(url)
-                text = clean_text(article.text)
-                title, outlet = title or article.title, outlet or article.outlet
-                published = published or article.published_at
-            except ArticleError as exc:
-                if item.headline_only:
-                    metadata_only(f'Article body unavailable ({exc}); headline metadata retained only.')
-                    continue
-                warning = f'News source {idx}: {exc}'
-                warnings.append(warning)
-                source_responses.append(SourceAnalysis(source_id=sid, title=title or url,
-                    outlet=outlet or 'Unavailable', url=url, published_at=published,
-                    summary=[], themes=[], input_origin='url', extraction_status='failed', warning=warning))
-                continue
+            metadata_only('Article body was not provided; FinPulse does not automatically fetch articles.')
+            continue
         outlet = outlet or 'User-supplied article'
         title = title or (url or f'Pasted article {idx}')
         label, method = classify(text)
@@ -61,13 +45,13 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         ))
     metrics = extract_metrics(earnings, payload.fiscal_period)
     themes, comparison = compare(earnings, sources)
-    highlights = summarize(earnings, 'earnings')
+    highlights = summarize(earnings, 'earnings', count=6)
     if '[FINPULSE_TABLE_START]' in earnings:
         warnings.append('SEC financial statements use explicitly labeled quarterly columns and units. Unclear tables are excluded instead of guessing.')
     if not highlights:
         warnings.append('No reliable narrative highlights found; table rows and dense numeric passages were excluded.')
-    if not sources:
-        warnings.append('No usable news passages; add article text or an accessible URL for cross-source analysis.')
+    if not sources and payload.news_sources:
+        warnings.append('News items contain headlines only; paste article bodies to enable source-backed summaries.')
     if not metrics:
         warnings.append('No high-confidence financial metric matches found; check wording and amounts in the source.')
     elif any(m.extraction_status == 'needs_review' for m in metrics):

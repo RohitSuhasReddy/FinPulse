@@ -3,10 +3,8 @@ import io
 import json
 from unittest.mock import patch
 import fitz
-import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.ingest import verify_public_url, ArticleError
 from app.analysis.sentiment import classify, rules_sentiment
 from app.schemas import StockPoint, AnalyzeRequest
 from app.stock import session_context
@@ -25,26 +23,20 @@ def body():
                               'text': 'Revenue growth remained strong while investors assessed higher costs and cloud demand. Management noted lingering supply risks and said its outlook was resilient.'}]}
 
 
-def test_localhost_and_private_ips_blocked():
-    for url in ['http://localhost/secret', 'http://127.0.0.1/', 'http://10.3.2.1/',
-                'http://169.254.169.254/latest/meta-data', 'http://[::1]/']:
-        with pytest.raises(ArticleError):
-            verify_public_url(url)
-    with pytest.raises(ArticleError):
-        verify_public_url('file:///etc/passwd')
-
-
-def test_source_failure_isolated():
-    with patch('app.analysis.service.fetch_article', side_effect=ArticleError('Source blocked')):
-        data = body()
-        data['news_sources'].append({'url': 'https://some-public-example.invalid/article'})
-        response = client.post('/api/v1/analyze', json=data)
-    assert response.status_code == 200
-    result = response.json()
-    assert len(result['sources']) == 2
-    assert result['sources'][1]['extraction_status'] == 'failed'
-    assert result['sources'][0]['extraction_status'] == 'ok'
-    assert any('Source blocked' in w for w in result['warnings'])
+def test_external_links_are_metadata_only():
+    data = body()
+    data['news_sources'].append({
+        'title': 'ExampleCorp quarterly results and outlook',
+        'outlet': 'Independent Publisher',
+        'url': 'https://publisher.example/earnings',
+        'headline_only': True})
+    result = client.post('/api/v1/analyze', json=data)
+    assert result.status_code == 200
+    articles = result.json()['sources']
+    assert len(articles) == 2
+    assert articles[0]['extraction_status'] == 'ok'
+    assert articles[1]['extraction_status'] == 'metadata_only'
+    assert articles[1]['summary'] == []
 
 
 def test_stock_session_alignment():

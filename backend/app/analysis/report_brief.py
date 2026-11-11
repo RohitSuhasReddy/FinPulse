@@ -162,8 +162,8 @@ def build_report_brief(text: str, metrics: list[FinancialMetric], company: str, 
         for _, source, sentence, score in ranked:
             if picked and (
                 len(picked) >= 2 or
-                len(picked[0][2]) + len(sentence) > 400 or
-                len(_tokens(picked[0][2]) & _tokens(sentence))/max(len(_tokens(picked[0][2]) | _tokens(sentence)), 1) > .34
+                len(picked[0][1]) + len(sentence) > 400 or
+                len(_tokens(picked[0][1]) & _tokens(sentence))/max(len(_tokens(picked[0][2]) | _tokens(sentence)), 1) > .34
             ):
                 continue
             picked.append((source, sentence, score))

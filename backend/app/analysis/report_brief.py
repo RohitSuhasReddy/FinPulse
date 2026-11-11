@@ -12,7 +12,7 @@ from app.schemas import Evidence, FinancialMetric, ReportBrief, ReportFinding
 TOPICS = (
     ("drivers", "What drove the quarter", r"\b(?:driven|driving|reflect(?:ed|s)?|due to|because of|supported by|attribut(?:ed|able)|contribut(?:ed|ion)|fuel(?:ed|ing)|benefit(?:ed)? from|demand|churn|pricing|membership gains|advertising growth)\b"),
     ("profitability", "Profitability and costs", r"\b(?:operating (?:income|profit|margin)|profitability|net income|gross margin|expenses?|cash flow|free cash flow|costs?|efficien(?:cy|cies)|investment spending)\b"),
-    ("outlook", "Guidance and expectations", r"\b(?:forecast|outlook|guidance|expect(?:ed|s|ing)?|project(?:ed|s|ion)|anticipat(?:e|ed)|next quarter|following quarter|full.year|q[1-4] 20\d\d)\b"),
+    ("outlook", "Guidance and expectations", r"\b(?:forecast|outlook|guidance|expect(?:ed|s|ing)?|project(?:ed|s|ion)|anticipat(?:e|ed)|next quarter|following quarter|full.year)\b"),
     ("risks", "Risks and watchpoints", r"\b(?:headwinds?|uncertain(?:ty|ties)|risk(?:s)?|delays?|pressures?|challenge(?:s|d)?|slowdown|weaker|reduced|downward)\b"),
     ("operations", "Business developments", r"\b(?:subscribers?|memberships?|engagement|viewership|content|films?|series|programming|product|service|partner(?:ship)?s?|licensed|live events|launched|regional|countries|customer(?:s)?|technology)\b"),
 )
@@ -107,8 +107,7 @@ def build_overview(metrics: list[FinancialMetric], company: str, period: str) ->
         amounts = " and ".join(statements)
     else:
         amounts = ", ".join(statements[:-1]) + ", and " + statements[-1]
-    return (f"For {period}, {company} reported {amounts}. "
-            "These are extracted reported figures, not a stock-price forecast.",
+    return (f"For {period}, {company} reported {amounts}.",
             [m.evidence for m in selected])
 
 

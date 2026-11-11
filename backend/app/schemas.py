@@ -67,6 +67,20 @@ class Highlight(BaseModel):
     evidence: Evidence
 
 
+class ReportFinding(BaseModel):
+    category: Literal['drivers', 'profitability', 'outlook', 'risks', 'operations']
+    heading: str
+    body: str
+    evidence: list[Evidence]
+
+
+class ReportBrief(BaseModel):
+    overview: str
+    overview_evidence: list[Evidence] = Field(default_factory=list)
+    findings: list[ReportFinding] = Field(default_factory=list)
+    method: str = 'grounded-nlp-v3'
+
+
 class SourceAnalysis(BaseModel):
     source_id: str
     title: str
@@ -113,6 +127,7 @@ class AnalyzeResponse(BaseModel):
     market_timing: str = 'unknown'
     analyzed_at: datetime
     summary: list[Highlight]
+    report_brief: ReportBrief | None = None
     metrics: list[FinancialMetric]
     earnings_themes: list[str]
     sources: list[SourceAnalysis]

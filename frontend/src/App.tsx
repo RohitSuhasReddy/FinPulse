@@ -50,6 +50,7 @@ const emptyInput: AnalysisInput = {
   company_name: '', ticker: '', fiscal_period: '', announcement_date: null,
   market_timing: 'unknown', earnings_text: '', news_sources: [],
 }
+const metricId = (m: ComparisonMetric) => [m.name, m.unit, m.currency || '', m.metric_variant || ''].join('|')
 const formatCompact = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, notation: 'compact' })
 const formatNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
 const dateLabel = (value: string | null) => value
@@ -173,7 +174,7 @@ function Studio({ onAnalyze, loading, error }: {
           </select>
         </label>
       </div>
-      <label className={'fp-upload ' + (fileName ? 'fp-upload-complete' : '')}>
+      <label className={'fp-upload ' + (fileName ? 'fp-upload-complete' : '')} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void upload(e.dataTransfer.files[0]) }}>
         {uploading ? <LoaderCircle className="fp-spin" size={30}/> : fileName ? <Check size={30}/> : <FileUp size={30}/>}
         <strong>{uploading ? 'Reading document…' : fileName || 'Drop in the quarterly report'}</strong>
         <span>PDF or TXT · Best with selectable, machine-readable text</span>
@@ -317,7 +318,7 @@ function Compare({ items }: { items: Saved[] }) {
   const [selected, setSelected] = useState<string[]>([])
   const validSelected = selected.filter(id => pool.some(i => i.analysis_id === id))
   const [comparison, setComparison] = useState<MultiComparison | null>(null)
-  const [metricName, setMetricName] = useState('')
+  const [metricKey, setMetricKey] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   async function generate() {
@@ -328,11 +329,11 @@ function Compare({ items }: { items: Saved[] }) {
         method:'POST', headers: { 'Content-Type': 'application/json' },
         body:JSON.stringify({ analysis_ids: validSelected }),
       }))
-      setComparison(data); setMetricName(data.metrics[0]?.name || '')
+      setComparison(data); setMetricKey(data.metrics[0] ? metricId(data.metrics[0]) : '')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not compare selected quarters') }
     finally { setLoading(false) }
   }
-  const metric = comparison?.metrics.find(m => m.name === metricName) || comparison?.metrics[0]
+  const metric = comparison?.metrics.find(m => metricId(m) === metricKey) || comparison?.metrics[0]
   const chart = comparison?.periods.map((p, i) => ({ period: p.fiscal_period, value: metric?.values[i] ?? null })) || []
   return <main className="fp-section fp-compare">
     <Reveal><span className="fp-eyebrow">05 / MULTI-QUARTER INTELLIGENCE</span><h1>Every quarter.<br/><em>One clear picture.</em></h1><p className="fp-lead">Choose two, three, five or more saved quarters. Compare matched reported values, preserve gaps and follow the evidence behind every number.</p></Reveal>
@@ -352,7 +353,7 @@ function Compare({ items }: { items: Saved[] }) {
     {comparison && <section className="fp-comparison-result">
       <Reveal><span className="fp-eyebrow">{comparison.ticker} / {comparison.periods.length} SELECTED PERIODS</span><h2>Trends, <em>not guesswork.</em></h2></Reveal>
       {metric ? <div className="fp-trend-shell">
-        <label className="fp-trend-selector">Metric<select value={metric.name} onChange={e => setMetricName(e.target.value)}>{comparison.metrics.map(m => <option key={m.name + m.unit + (m.metric_variant || '')} value={m.name}>{m.name} · {m.metric_variant || 'reported'}</option>)}</select></label>
+        <label className="fp-trend-selector">Metric<select value={metricId(metric)} onChange={e => setMetricKey(e.target.value)}>{comparison.metrics.map(m => <option key={metricId(m)} value={metricId(m)}>{m.name} · {m.metric_variant || 'basis unspecified'}</option>)}</select></label>
         <div className="fp-trend-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={chart} margin={{ top:20,right:26,left:0,bottom:20 }}>
           <CartesianGrid stroke="#38304e" strokeDasharray="3 8" vertical={false}/>
           <XAxis dataKey="period" tick={{ fill:'#A49CBF',fontSize:11 }} stroke="#A49CBF"/>

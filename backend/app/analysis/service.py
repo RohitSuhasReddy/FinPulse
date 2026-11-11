@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from app.analysis.text import clean_text, detected_themes, summarize
 from app.analysis.metrics import extract_metrics
+from app.analysis.report_brief import build_report_brief
 from app.analysis.comparison import compare
 from app.analysis.sentiment import classify
 from app.schemas import AnalyzeRequest, AnalyzeResponse, SourceAnalysis
@@ -46,10 +47,11 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
     metrics = extract_metrics(earnings, payload.fiscal_period)
     themes, comparison = compare(earnings, sources)
     highlights = summarize(earnings, 'earnings', count=6)
+    brief = build_report_brief(earnings, metrics, payload.company_name, payload.fiscal_period)
     if '[FINPULSE_TABLE_START]' in earnings:
         warnings.append('SEC financial statements use explicitly labeled quarterly columns and units. Unclear tables are excluded instead of guessing.')
-    if not highlights:
-        warnings.append('No reliable narrative highlights found; table rows and dense numeric passages were excluded.')
+    if not brief.findings:
+        warnings.append('No reliable operational findings could be selected; definitions and report boilerplate were excluded.')
     if not sources and payload.news_sources:
         warnings.append('News items contain headlines only; paste article bodies to enable source-backed summaries.')
     if not metrics:
@@ -61,7 +63,7 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
     return AnalyzeResponse(analysis_id=digest, company_name=payload.company_name,
         ticker=payload.ticker.upper(), fiscal_period=payload.fiscal_period,
         announcement_date=payload.announcement_date, market_timing=payload.market_timing,
-        analyzed_at=datetime.now(timezone.utc), summary=highlights,
+        analyzed_at=datetime.now(timezone.utc), summary=highlights, report_brief=brief,
         metrics=metrics, earnings_themes=themes, sources=source_responses,
         comparison=comparison, warnings=warnings, extraction_version=2,
         sentiment_model=source_responses[0].sentiment_method if source_responses and source_responses[0].sentiment_method else 'rules-v1')

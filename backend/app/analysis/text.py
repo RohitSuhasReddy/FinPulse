@@ -90,7 +90,7 @@ def summarize(text: str, source_id: str, count: int = 3) -> list[Highlight]:
     """Select short, source-exact narrative sentences; never select raw tables."""
     candidates = [p for p in report_passages(text) if _narrative(p) and not re.search(
         r'^(?:our goal is|our mission|we aim|f/?x[- ]neutral .*excludes|constant currency .*excludes)',
-        re.sub(r'\\s+', ' ', p.text).strip(), re.I)]
+        re.sub(r'\s+', ' ', p.text).strip(), re.I)]
     if not candidates:
         return []
     docs = [set(tokens(p.text)) for p in candidates]

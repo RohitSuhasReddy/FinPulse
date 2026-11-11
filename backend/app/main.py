@@ -1,16 +1,19 @@
 """FinPulse API — source-linked, text-first and local-first."""
 from datetime import date
+from pathlib import Path
+from dotenv import load_dotenv
 from typing import Literal
 from pydantic import BaseModel, Field
 from app import insights
 from app.multi_compare import compare_many
 from fastapi import FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas import AnalyzeRequest, AnalyzeResponse, ArticleRequest, ArticleResponse, StockContextResponse
+from app.schemas import AnalyzeRequest, AnalyzeResponse, StockContextResponse
 from app.analysis.service import analyze
-from app.ingest import fetch_article, ArticleError
 from app.stock import get_stock
 from app import cache
+
+load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
 app = FastAPI(title='FinPulse API', version='1.0.0',
               description='Manual earnings-document intelligence and evidence-linked reports')
@@ -45,14 +48,6 @@ def saved_analysis(analysis_id: str) -> AnalyzeResponse:
     if result is None:
         raise HTTPException(404, 'Analysis not found')
     return result
-
-
-@app.post('/api/v1/articles/extract', response_model=ArticleResponse)
-def extract_article(body: ArticleRequest) -> ArticleResponse:
-    try:
-        return fetch_article(str(body.url))
-    except ArticleError as exc:
-        raise HTTPException(422, str(exc)) from exc
 
 
 @app.post('/api/v1/pdf/extract')

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import {
-  ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, Check, ChevronLeft,
+  ArrowRight, ArrowUpRight, BarChart3, Check, ChevronLeft,
   ChevronRight, ExternalLink, FileText, FileUp, Info, LibraryBig,
   LoaderCircle, Newspaper, Plus, Sparkles, Trash2, TrendingUp,
 } from 'lucide-react'

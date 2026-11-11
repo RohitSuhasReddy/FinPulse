@@ -2,18 +2,18 @@
 from datetime import date
 from typing import Literal
 from pydantic import BaseModel, Field
-from app import research, auto_research
-from app.auto_research import AutoResearchInput
+from app import insights
+from app.multi_compare import compare_many
 from fastapi import FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import AnalyzeRequest, AnalyzeResponse, ArticleRequest, ArticleResponse, StockContextResponse
 from app.analysis.service import analyze
 from app.ingest import fetch_article, ArticleError
-from app.stock import get_stock, get_recent_stock
+from app.stock import get_stock
 from app import cache
 
 app = FastAPI(title='FinPulse API', version='1.0.0',
-              description='Evidence-linked earnings and multi-source news intelligence')
+              description='Manual earnings-document intelligence and evidence-linked reports')
 app.add_middleware(CORSMiddleware,
     allow_origins=['http://localhost:5173', 'http://127.0.0.1:5173'],
     allow_credentials=False, allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
@@ -59,14 +59,14 @@ def extract_article(body: ArticleRequest) -> ArticleResponse:
 async def extract_pdf(file: UploadFile = File(...)) -> dict[str, str | int]:
     if file.content_type not in ('application/pdf', 'application/octet-stream'):
         raise HTTPException(415, 'Upload a PDF file')
-    data = await file.read(8_000_001)
-    if len(data) > 8_000_000:
-        raise HTTPException(413, 'PDF must be 8 MB or smaller')
+    data = await file.read(16_000_001)
+    if len(data) > 16_000_000:
+        raise HTTPException(413, 'PDF must be 16 MB or smaller')
     try:
         import fitz
         with fitz.open(stream=data, filetype='pdf') as document:
-            if document.page_count > 80:
-                raise HTTPException(413, 'PDF must have 80 pages or fewer')
+            if document.page_count > 150:
+                raise HTTPException(413, 'PDF must have 150 pages or fewer')
             text = '\n'.join(page.get_text('text') for page in document)[:350_000].strip()
             pages = document.page_count
     except (ValueError, RuntimeError) as exc:
@@ -118,54 +118,33 @@ def compare_saved(left: str, right: str) -> dict:
     return cache.compare_reports(a, b)
 
 
-@app.get('/api/v1/news/discover')
-def discover_coverage(company: str = Query(min_length=2, max_length=120),
-                      ticker: str = Query('', max_length=12),
-                      date: date | None = None) -> dict:
+class MultiComparisonSelection(BaseModel):
+    analysis_ids: list[str] = Field(min_length=2)
+
+
+@app.post('/api/v1/compare/multi')
+def compare_selected(selection: MultiComparisonSelection) -> dict:
+    if len(set(selection.analysis_ids)) != len(selection.analysis_ids):
+        raise HTTPException(422, 'Do not select the same saved report twice')
+    if any(len(x) != 16 or any(c not in '0123456789abcdef' for c in x) for x in selection.analysis_ids):
+        raise HTTPException(422, 'Invalid analysis IDs')
     try:
-        return research.discover_news(company, ticker, date)
-    except research.ResearchError as exc:
-        raise HTTPException(503, str(exc)) from exc
-
-
-@app.get('/api/v1/filings/{ticker}')
-def sec_filings(ticker: str) -> dict:
+        reports = [cache.load(report_id) for report_id in selection.analysis_ids]
+    except OSError as exc:
+        raise HTTPException(503, 'Saved reports could not be loaded') from exc
+    if any(r is None for r in reports):
+        raise HTTPException(404, 'One or more selected reports are missing')
     try:
-        return research.filings(ticker)
-    except research.ResearchError as exc:
-        status = 503 if 'FINPULSE_SEC_USER_AGENT' in str(exc) or 'unavailable' in str(exc) else 422
-        raise HTTPException(status, str(exc)) from exc
-
-
-class FilingSelection(BaseModel):
-    ticker: str = Field(min_length=1, max_length=12, pattern=r'^[A-Za-z0-9.\-]+$')
-    accession: str = Field(pattern=r'^\d{10}-\d{2}-\d{6}$')
-
-
-@app.post('/api/v1/filings/import')
-def import_sec_filing(selection: FilingSelection) -> dict:
-    try:
-        return research.import_filing(selection.ticker, selection.accession)
-    except research.ResearchError as exc:
-        status = 503 if 'FINPULSE_SEC_USER_AGENT' in str(exc) or 'unavailable' in str(exc) else 422
-        raise HTTPException(status, str(exc)) from exc
-
-
-@app.post('/api/v1/research/auto', response_model=AnalyzeResponse)
-def analyze_automatically(payload: AutoResearchInput) -> AnalyzeResponse:
-    """A ticker-first, one-shot research request. Each provider can fail independently."""
-    try:
-        return auto_research.auto_research(payload)
-    except research.ResearchError as exc:
-        status = 503 if ('FINPULSE_SEC_USER_AGENT' in str(exc) or 'unavailable' in str(exc)) else 422
-        raise HTTPException(status, str(exc)) from exc
-    except (ValueError, OSError) as exc:
-        raise HTTPException(503, 'Automated research unavailable. Check data source connectivity or try a manual PDF.') from exc
-
-
-@app.get('/api/v1/stocks/{ticker}/recent', response_model=StockContextResponse)
-def stock_recent_context(ticker: str) -> StockContextResponse:
-    try:
-        return get_recent_stock(ticker)
+        return compare_many(reports)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+
+
+@app.get('/api/v1/market/interpret/{analysis_id}')
+def market_interpretation(analysis_id: str) -> dict:
+    if len(analysis_id) != 16 or any(c not in '0123456789abcdef' for c in analysis_id):
+        raise HTTPException(404, 'Analysis not found')
+    report = cache.load(analysis_id)
+    if report is None:
+        raise HTTPException(404, 'Analysis not found')
+    return insights.interpret(report)

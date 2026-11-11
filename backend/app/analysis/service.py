@@ -45,7 +45,7 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         ))
     metrics = extract_metrics(earnings, payload.fiscal_period)
     themes, comparison = compare(earnings, sources)
-    highlights = summarize(earnings, 'earnings')
+    highlights = summarize(earnings, 'earnings', count=6)
     if '[FINPULSE_TABLE_START]' in earnings:
         warnings.append('SEC financial statements use explicitly labeled quarterly columns and units. Unclear tables are excluded instead of guessing.')
     if not highlights:

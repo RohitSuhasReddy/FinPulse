@@ -5,6 +5,8 @@ export interface FinancialMetric {
   currency: string | null; reporting_period: string; comparison_basis: 'YoY' | 'QoQ' | null;
   metric_variant: 'reported' | 'adjusted' | null; extraction_status: 'extracted' | 'needs_review'; evidence: Evidence;
 }
+export interface ReportFinding { category: 'drivers' | 'profitability' | 'outlook' | 'risks' | 'operations'; heading: string; body: string; evidence: Evidence[] }
+export interface ReportBrief { overview: string; overview_evidence: Evidence[]; findings: ReportFinding[]; method: string }
 export interface SourceAnalysis {
   source_id: string; title: string; outlet: string; url: string | null; published_at: string | null;
   summary: Highlight[]; themes: string[]; sentiment_label: 'positive' | 'negative' | 'neutral' | null;
@@ -23,7 +25,7 @@ export interface SocialPost {
 export interface Analysis {
   analysis_id: string; company_name: string; ticker: string; fiscal_period: string;
   announcement_date: string | null; market_timing: 'before_open' | 'after_close' | 'unknown';
-  analyzed_at: string; summary: Highlight[]; metrics: FinancialMetric[];
+  analyzed_at: string; summary: Highlight[]; report_brief?: ReportBrief | null; metrics: FinancialMetric[];
   earnings_themes: string[]; sources: SourceAnalysis[];
   comparison: ThemeComparison[]; warnings: string[]; sentiment_model: string;
   data_origin: 'user_supplied_text' | 'sec_filing';

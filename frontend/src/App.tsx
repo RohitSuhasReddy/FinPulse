@@ -209,8 +209,7 @@ function Studio({ onAnalyze, loading, error }: {
 }
 
 function Earnings({ data }: { data: Analysis }) {
-  const strong = data.metrics.filter(m => m.extraction_status === 'extracted')
-  const metrics = (strong.length ? strong : data.metrics).slice(0, 8)
+  const metrics = data.metrics.filter(m => m.extraction_status === 'extracted' && m.normalized_value !== null).slice(0, 8)
   return <main className="fp-report">
     <section className="fp-report-opening"><Reveal><span className="fp-eyebrow">{data.ticker} / {data.fiscal_period} / THE EARNINGS STORY</span>
       <h1>Behind <em>the quarter.</em></h1>
@@ -223,12 +222,42 @@ function Earnings({ data }: { data: Analysis }) {
         : <Reveal className="fp-metric-slide"><span className="fp-eyebrow">NO CONFIDENT METRICS</span><h2>Evidence before estimation.</h2><p>No values met the extractor's confidence checks. Review the uploaded document rather than filling gaps with guessed figures.</p></Reveal>}
     </section>
     <section className="fp-story-summary">
-      <Reveal><span className="fp-eyebrow">THE REPORT, IN CONTEXT</span><h2>The story behind <em>the numbers.</em></h2>
-      <p className="fp-summary-sub">A continuous NLP-selected account from the supplied document—not an AI-invented earnings thesis.</p></Reveal>
-      {data.summary.length ? data.summary.map((highlight, i) => <Reveal key={i} className="fp-summary-passage">
-        <span className="fp-passage-no">{String(i + 1).padStart(2, '0')}</span><p>{highlight.text}</p>
-        <details className="fp-evidence"><summary>Original report passage <ChevronRight size={14}/></summary><blockquote>{highlight.evidence.text}</blockquote></details>
-      </Reveal>) : <p>No reliable narrative passages could be extracted. This result remains saved for review.</p>}
+      <Reveal>
+        <span className="fp-eyebrow">THE REPORT, EXPLAINED</span>
+        <h2>What this quarter <em>actually says.</em></h2>
+        <p className="fp-summary-sub">A concise, evidence-grounded financial briefing. Financial results are separated from management commentary, forecasts and risks.</p>
+      </Reveal>
+      {data.report_brief ? <>
+        <Reveal className="fp-brief-overview">
+          <span className="fp-eyebrow">THE FINANCIAL PICTURE</span>
+          <p>{data.report_brief.overview}</p>
+          {data.report_brief.overview_evidence.length > 0 && <details className="fp-brief-evidence">
+            <summary><FileText size={14}/> Check figures against the report <ChevronRight size={14}/></summary>
+            <div>{data.report_brief.overview_evidence.map((e, i) => <blockquote key={i}>{e.text}</blockquote>)}</div>
+          </details>}
+        </Reveal>
+        {data.report_brief.findings.length > 0
+          ? <div className="fp-brief-findings">{data.report_brief.findings.map((finding, i) =>
+            <Reveal className="fp-brief-finding" key={finding.category}>
+              <span className="fp-brief-index">{String(i + 1).padStart(2, '0')}</span>
+              <div className="fp-brief-content">
+                <span className="fp-eyebrow">{finding.category.replace(/_/g, ' ').toUpperCase()}</span>
+                <h3>{finding.heading}</h3>
+                <p>{finding.body}</p>
+                <details className="fp-brief-evidence">
+                  <summary><FileText size={14}/> Source evidence <span>({finding.evidence.length})</span> <ChevronRight size={14}/></summary>
+                  <div>{finding.evidence.map((e, j) => <blockquote key={j}>{e.text}</blockquote>)}</div>
+                </details>
+              </div>
+            </Reveal>)}</div>
+          : <Reveal className="fp-brief-missing"><Info size={18}/><p>The document did not contain enough reliable narrative observations to create additional findings. FinPulse has deliberately excluded definitions, generic goals and incomplete extracts.</p></Reveal>}
+        <p className="fp-disclaimer fp-brief-method">NLP-based selection with a verified-metric overview. Finding text follows the source; it is not an LLM-generated explanation. Review cited passages for material decisions.</p>
+      </> : <Reveal className="fp-brief-missing">
+        <Info size={22}/>
+        <div><h3>This saved report uses the older summary engine.</h3>
+          <p>Upload the original PDF or TXT again in Studio to generate the new structured briefing. Your existing report remains in the Library until then.</p>
+        </div>
+      </Reveal>}
       {data.earnings_themes.length > 0 && <Reveal><div className="fp-theme-list">{data.earnings_themes.map(t => <span key={t}>{t}</span>)}</div></Reveal>}
     </section>
     <section className="fp-report-footnote"><span className="fp-eyebrow">DATA INTEGRITY</span>

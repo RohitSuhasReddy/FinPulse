@@ -44,6 +44,28 @@ def passages(text: str) -> list[Passage]:
     return output
 
 
+
+
+def report_passages(text: str) -> list[Passage]:
+    """Read PDF-wrapped sentences without treating every visual line as a sentence.
+
+    Preserve raw source offsets for expandable citations; UI may collapse display
+    whitespace, but evidence.text always equals text[start_offset:end_offset].
+    """
+    separator = re.compile(r'(?<=[.!?])\s+(?=[A-Z₹$0-9])|\n[ \t]*\n+')
+    starts = [0] + [match.end() for match in separator.finditer(text)]
+    ends = [match.start() for match in separator.finditer(text)] + [len(text)]
+    result = []
+    for start, end in zip(starts, ends):
+        raw = text[start:end]
+        leading = len(raw) - len(raw.lstrip())
+        stripped = raw.strip()
+        if len(stripped) < 30:
+            continue
+        offset = start + leading
+        result.append(Passage(text=stripped, start=offset, end=offset+len(stripped)))
+    return result
+
 def evidence_for(passage: Passage, source_id: str) -> Evidence:
     return Evidence(source_id=source_id,text=passage.text,start_offset=passage.start,end_offset=passage.end)
 
@@ -66,7 +88,9 @@ def _narrative(p: Passage) -> bool:
 
 def summarize(text: str, source_id: str, count: int = 3) -> list[Highlight]:
     """Select short, source-exact narrative sentences; never select raw tables."""
-    candidates = [p for p in passages(text) if _narrative(p)]
+    candidates = [p for p in report_passages(text) if _narrative(p) and not re.search(
+        r'^(?:our goal is|our mission|we aim|f/?x[- ]neutral .*excludes|constant currency .*excludes)',
+        re.sub(r'\\s+', ' ', p.text).strip(), re.I)]
     if not candidates:
         return []
     docs = [set(tokens(p.text)) for p in candidates]
